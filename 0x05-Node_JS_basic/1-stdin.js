@@ -3,7 +3,7 @@ process.stdin.setEncoding('utf8');
 process.stdin.on('data', (data) => {
   const input = data.trim();
   if (input) {
-    process.stdout.write(`Your name is: ${input}\n`);
+    process.stdout.write(`Your name is: ${input}`);
   }
 });
 process.stdin.on('end', () => {
