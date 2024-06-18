@@ -7,5 +7,7 @@ process.stdin.on('data', (data) => {
   }
 });
 process.stdin.on('end', () => {
-  process.stdout.write('This important software is now closing\n');
+  if (!process.stdin.isTTY) {
+    process.stdout.write('This important software is now closing\n');
+  }
 });
