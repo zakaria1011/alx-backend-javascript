@@ -35,7 +35,7 @@ const app = http.createServer((req, res) => {
         res.end(`Number of students in SWE: ${sweStudents.length}. List: ${sweStudents.join(', ')}\n`);
       })
       .catch((error) => {
-        res.writeHead(500); // Internal Server Error
+        res.writeHead(500);
         res.end(`Cannot load the database: ${error.message}\n`);
       });
   } else {
