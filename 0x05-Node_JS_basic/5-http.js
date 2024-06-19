@@ -17,7 +17,7 @@ const app = http.createServer((req, res) => {
   } else if (reqUrl.pathname === '/students') {
     if (!databasePath) {
       res.writeHead(500); // Internal Server Error due to missing database path
-      res.end('Database path is missing\n');
+      res.end('Cannot load the database');
     } else {
       // Read and process the CSV file
       fs.readFile(databasePath, 'utf-8')
