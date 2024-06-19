@@ -10,7 +10,7 @@ function countStudents(path) {
     const csStudents = [];
     const sweStudets = [];
     students.forEach((student) => {
-      const [firstname, lastname, age, field] = student;
+      const [firstname, , , field] = student;
       if (field === 'CS') {
         csStudents.push(firstname);
       } else if (field === 'SWE') {
