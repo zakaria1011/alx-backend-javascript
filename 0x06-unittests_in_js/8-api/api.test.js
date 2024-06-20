@@ -12,7 +12,7 @@ describe('index page', () => {
     server.close();
   });
   it('correct status code?', () => new Promise((done) => {
-    request('http://localhost:7865', (_, response, _) => {
+    request('http://localhost:7865', (_, response) => {
       expect(response.statusCode).to.equal(200);
       done();
     });
