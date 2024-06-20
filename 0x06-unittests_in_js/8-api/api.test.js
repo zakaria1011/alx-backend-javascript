@@ -1,6 +1,5 @@
 const request = require('request');
 const { expect } = require('chai');
-const { response } = require('express');
 
 describe('index page', () => {
   let server;
