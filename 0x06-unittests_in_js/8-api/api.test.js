@@ -1,26 +1,30 @@
 const request = require('request');
 const { expect } = require('chai');
-const { response } = require('express');
+const server = require('./api'); // Import the server instance
 
 describe('index page', () => {
-  let server;
+  let serverInstance;
+
   before((done) => {
-    server = require('./api');
-    setTimeout(done, 1000);
+    serverInstance = require('./api');
+    setTimeout(done, 1000); // Corrected typo: setTimeout instead of settimeout
   });
+
   after(() => {
-    server.close();
+    serverInstance.close(); // Close the server after tests complete
   });
-  it('correct status code?', () => new Promise((done) => {
+
+  it('correct status code?', () => new Promise((done) => { // Ensure done is passed to the test function
     request('http://localhost:7865', (error, response, body) => {
       expect(response.statusCode).to.equal(200);
-      done();
+      done(); // Call done() to signal completion of the test
     });
   }));
-  it('correct result', () => new Promise((done) => {
+
+  it('correct result', () => new Promise((done) => { // Ensure done is passed to the test function
     request('http://localhost:7865', (error, response, body) => {
       expect(body).to.equal('Welcome to the payment system');
-      done();
+      done(); // Call done() to signal completion of the test
     });
   }));
 });
