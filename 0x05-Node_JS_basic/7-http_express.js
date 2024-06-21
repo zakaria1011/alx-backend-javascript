@@ -1,76 +1,96 @@
 const express = require('express');
-const fs = require('fs').promises;
+const fs = require('fs');
 
-const PORT = 1245;
-const databasePath = process.argv[2];
 const app = express();
+const PORT = 1245;
+const DB_FILE = process.argv.length > 2 ? process.argv[2] : '';
 
-// Middleware to set content type to plain text for all responses
-app.use((req, res, next) => {
-  res.setHeader('Content-Type', 'text/plain');
-  next();
-});
+/**
+ * Counts the students in a CSV data file.
+ * @param {String} dataPath The path to the CSV data file.
+ * @author Bezaleel Olakunori <https://github.com/B3zaleel>
+ */
+const countStudents = (dataPath) => new Promise((resolve, reject) => {
+  if (!dataPath) {
+    reject(new Error('Cannot load the database'));
+  }
+  if (dataPath) {
+    fs.readFile(dataPath, (err, data) => {
+      if (err) {
+        reject(new Error('Cannot load the database'));
+      }
+      if (data) {
+        const reportParts = [];
+        const fileLines = data.toString('utf-8').trim().split('\n');
+        const studentGroups = {};
+        const dbFieldNames = fileLines[0].split(',');
+        const studentPropNames = dbFieldNames.slice(
+          0,
+          dbFieldNames.length - 1,
+        );
 
-// Function to count and categorize students from CSV data
-const countStudents = (path) => new Promise((resolve, reject) => {
-  fs.readFile(path, 'utf-8')
-    .then((data) => {
-      const lines = data.split('\n').filter((line) => line.trim() !== '');
-      const students = lines.slice(1).map((line) => line.split(','));
-      const numberOfStudents = students.length;
-      const csStudents = [];
-      const sweStudents = [];
-
-      students.forEach((student) => {
-        const [firstname, , , field] = student;
-        if (field === 'CS') {
-          csStudents.push(firstname.trim());
-        } else if (field === 'SWE') {
-          sweStudents.push(firstname.trim());
+        for (const line of fileLines.slice(1)) {
+          const studentRecord = line.split(',');
+          const studentPropValues = studentRecord.slice(
+            0,
+            studentRecord.length - 1,
+          );
+          const field = studentRecord[studentRecord.length - 1];
+          if (!Object.keys(studentGroups).includes(field)) {
+            studentGroups[field] = [];
+          }
+          const studentEntries = studentPropNames.map((propName, idx) => [
+            propName,
+            studentPropValues[idx],
+          ]);
+          studentGroups[field].push(Object.fromEntries(studentEntries));
         }
-      });
 
-      const result = 'This is the list of our students\n'
-          + `Number of students: ${numberOfStudents}\n`
-          + `Number of students in CS: ${csStudents.length}. List: ${csStudents.join(', ')}\n`
-          + `Number of students in SWE: ${sweStudents.length}. List: ${sweStudents.join(', ')}`;
-
-      resolve(result);
-    })
-    .catch((error) => {
-      reject(new Error(`Cannot load the database: ${error.message}`));
+        const totalStudents = Object.values(studentGroups).reduce(
+          (pre, cur) => (pre || []).length + cur.length,
+        );
+        reportParts.push(`Number of students: ${totalStudents}`);
+        for (const [field, group] of Object.entries(studentGroups)) {
+          reportParts.push([
+            `Number of students in ${field}: ${group.length}.`,
+            'List:',
+            group.map((student) => student.firstname).join(', '),
+          ].join(' '));
+        }
+        resolve(reportParts.join('\n'));
+      }
     });
+  }
 });
 
-// Route for root path
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
   res.send('Hello Holberton School!');
 });
 
-// Route for /students path
-app.get('/students', (req, res) => {
-  if (!databasePath) {
-    res.status(500).send('Database path is missing\n');
-    return;
-  }
+app.get('/students', (_, res) => {
+  const responseParts = ['This is the list of our students'];
 
-  countStudents(databasePath)
-    .then((result) => {
-      res.send(result);
+  countStudents(DB_FILE)
+    .then((report) => {
+      responseParts.push(report);
+      const responseText = responseParts.join('\n');
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Length', responseText.length);
+      res.statusCode = 200;
+      res.write(Buffer.from(responseText));
     })
-    .catch((error) => {
-      res.status(500).send(error.message);
+    .catch((err) => {
+      responseParts.push(err instanceof Error ? err.message : err.toString());
+      const responseText = responseParts.join('\n');
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Length', responseText.length);
+      res.statusCode = 200;
+      res.write(Buffer.from(responseText));
     });
 });
 
-// 404 Error Handler
-app.use((req, res) => {
-  res.status(404).send('Not Found');
+app.listen(PORT, () => {
+  console.log(`Server listening on PORT ${PORT}`);
 });
 
-// Start the server
-const server = app.listen(PORT, () => {
-  console.log(`Server is listening on port ${PORT}`);
-});
-
-module.exports = server;
+module.exports = app;
